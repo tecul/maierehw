@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 
+#define SAT_NB              32
 #define GPS_SAMPLING_RATE   2048000
 #define FLOAT               double
 

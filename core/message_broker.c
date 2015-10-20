@@ -14,7 +14,7 @@ LIST_HEAD(subscriber_head, subscriber_list_entry);
 struct msg_type_list_entry {
     LIST_ENTRY(msg_type_list_entry) entries;
     char *msg_type;
-    struct subscriber_head *subscribers;
+    struct subscriber_head subscribers;
 };
 LIST_HEAD(msg_type_head, msg_type_list_entry);
 
@@ -45,7 +45,8 @@ static struct msg_type_list_entry *find_msg_type_list_entry_or_allocate(char *ms
         desc = (struct msg_type_list_entry *) malloc(sizeof(struct msg_type_list_entry));
         assert(desc != NULL);
         desc->msg_type = strdup(msg_type);
-        LIST_INIT(desc->subscribers);
+        LIST_INIT(&desc->subscribers);
+        LIST_INSERT_HEAD(&msg_type_list, desc, entries);
     }
 
     return desc;
@@ -59,7 +60,7 @@ void subscribe(struct subscriber *subscriber, char *msg_type)
 
     assert(subscriber_list_entry != NULL);
     subscriber_list_entry->subscriber = subscriber;
-    LIST_INSERT_HEAD(msg_type_list_entry->subscribers, subscriber_list_entry, entries);
+    LIST_INSERT_HEAD(&msg_type_list_entry->subscribers, subscriber_list_entry, entries);
 }
 
 void unsubscribe(struct subscriber *subscriber, char *msg_type)
@@ -70,7 +71,7 @@ void unsubscribe(struct subscriber *subscriber, char *msg_type)
     if (msg_type_list_entry) {
         struct subscriber_list_entry *subscriber_list_entry;
 
-        LIST_FOREACH(subscriber_list_entry, msg_type_list_entry->subscribers, entries) {
+        LIST_FOREACH(subscriber_list_entry, &msg_type_list_entry->subscribers, entries) {
             if (subscriber_list_entry->subscriber == subscriber) {
                 subscriber_list_entry_found = subscriber_list_entry;
                 break;
@@ -88,8 +89,8 @@ void publish(struct msg *msg)
     if (msg_type_list_entry) {
         struct subscriber_list_entry *subscriber_list_entry;
 
-        LIST_FOREACH(subscriber_list_entry, msg_type_list_entry->subscribers, entries) {
-            subscriber_list_entry->subscriber->notify(msg);
+        LIST_FOREACH(subscriber_list_entry, &msg_type_list_entry->subscribers, entries) {
+            subscriber_list_entry->subscriber->notify(subscriber_list_entry->subscriber, msg);
         }
     }
 }
