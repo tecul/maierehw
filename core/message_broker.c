@@ -89,6 +89,7 @@ void publish(struct msg *msg)
     if (msg_type_list_entry) {
         struct subscriber_list_entry *subscriber_list_entry;
 
+        /* use LIST_FOREACH_SAFE so we can call unsubscribe when in notify */
         LIST_FOREACH(subscriber_list_entry, &msg_type_list_entry->subscribers, entries) {
             subscriber_list_entry->subscriber->notify(subscriber_list_entry->subscriber, msg);
         }

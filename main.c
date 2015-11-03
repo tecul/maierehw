@@ -3,6 +3,7 @@
 #include "core.h"
 #include "file_source.h"
 #include "acquisition_basic.h"
+#include "tracking_manager.h"
 
 int main(int argc, char **argv)
 {
@@ -15,9 +16,10 @@ int main(int argc, char **argv)
     /* create world */
     struct source_itf *source_itf = create_file_source(argv[1]);
     struct acquisition_itf *acquisition_itf = create_acquisition_basic();
+    struct tracking_manager_itf *tracking_manager_itf = create_tracking_manager(8);
 
     /* configure world */
-    acquisition_itf->init(acquisition_itf, ~0);
+    acquisition_itf->init(acquisition_itf, /*1 << 4*/~0);
     /* run it */
     while(source_itf->read_one_ms(source_itf, msg_payload_new_one_ms_buffer.file_source_buffer) == 0) {
         publish(&msg);
