@@ -6,7 +6,7 @@ struct tracking_manager_itf {
 };
 
 struct tracking_loop_itf {
-	void (*destroy)(struct tracking_loop_itf *tracking_loop_itf);
+    void (*destroy)(struct tracking_loop_itf *tracking_loop_itf);
 };
 
 #endif

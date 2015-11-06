@@ -29,6 +29,12 @@ struct msg_payload_tracking_look_unlock_or_lock_failure {
     int satellite_nb;
 };
 
+struct msg_payload_new_pll_bit {
+    int satellite_nb;
+    int value;
+    double timestamp;
+};
+
 struct msg_payload_new_demod_bit {
     int satellite_nb;
     int value;

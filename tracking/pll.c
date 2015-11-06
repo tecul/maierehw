@@ -169,16 +169,16 @@ static void send_msg_tracking_look_unlock_or_lock_failure(int satellite_nb)
     publish(&msg);
 }
 
-static void send_msg_new_demod_bit(int satellite_nb, int value, double timestamp)
+static void send_msg_new_pll_bit(int satellite_nb, int value, double timestamp)
 {
-    struct msg_payload_new_demod_bit msg_payload_new_demod_bit;
+    struct msg_payload_new_pll_bit msg_payload_new_pll_bit;
     struct msg msg;
 
-    msg.msg_type = "new_demod_bit";
-    msg.msg_payload = &msg_payload_new_demod_bit;
-    msg_payload_new_demod_bit.satellite_nb = satellite_nb;
-    msg_payload_new_demod_bit.value = value;
-    msg_payload_new_demod_bit.timestamp = timestamp;
+    msg.msg_type = "new_pll_bit";
+    msg.msg_payload = &msg_payload_new_pll_bit;
+    msg_payload_new_pll_bit.satellite_nb = satellite_nb;
+    msg_payload_new_pll_bit.value = value;
+    msg_payload_new_pll_bit.timestamp = timestamp;
     publish(&msg);
 }
 
@@ -229,7 +229,7 @@ enum tracking_loop_state tl_pll_locked_handler(struct pll *pll, struct msg_paylo
 
         time_stamp = pll_build_buffer(pll, buf);
         bit = pll_compute_bit(pll, buf, &time_stamp);
-        send_msg_new_demod_bit(pll->sat_nb, bit, time_stamp);
+        send_msg_new_pll_bit(pll->sat_nb, bit, time_stamp);
     }
 
     if (pll->info.consecutive_unlock_event > 128) {
