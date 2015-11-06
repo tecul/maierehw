@@ -127,8 +127,7 @@ struct demod_itf *create_demod()
     memset(demod, 0, sizeof(struct demod));
     demod->demod_itf.destroy = destroy;
     demod->new_pll_bit_subscriber.notify = new_pll_bit_notify;
-    subscribe(&demod->new_pll_bit_subscriber, "new_demod_bit");
+    subscribe(&demod->new_pll_bit_subscriber, "new_pll_bit");
 
     return &demod->demod_itf;
 }
-
