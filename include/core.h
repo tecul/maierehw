@@ -41,6 +41,19 @@ struct msg_payload_new_demod_bit {
     double timestamp;
 };
 
+struct msg_payload_new_demod_bit_timestamped {
+    int satellite_nb;
+    int value;
+    double timestamp;
+    double gps_time;
+};
+
+struct msg_payload_new_word {
+    int satellite_nb;
+    int word;
+    int index;
+};
+
 struct subscriber {
     void (*notify)(struct subscriber *subscriber, struct msg *msg);
 };
