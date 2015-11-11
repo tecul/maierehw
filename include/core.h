@@ -54,6 +54,11 @@ struct msg_payload_new_word {
     int index;
 };
 
+struct msg_payload_new_ephemeris {
+    int satellite_nb;
+    struct eph eph;
+};
+
 struct subscriber {
     void (*notify)(struct subscriber *subscriber, struct msg *msg);
 };

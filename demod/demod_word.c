@@ -128,7 +128,7 @@ static void read_next_subframe(struct demod_word *demod_word, struct msg_payload
         if (state->index == 2) {
             if (state->tlm & 1)
                 state->word = state->word ^ 0x3fffffc0;
-            printf("%d : tow = %d / sf_id = %d\n", payload->satellite_nb, (state->word >> 13), ((state->word >> 8) & 7));
+            //printf("%d : tow = %d / sf_id = %d\n", payload->satellite_nb, (state->word >> 13), ((state->word >> 8) & 7));
             state->gps_time = ((state->word >> 13) - 1) * 6 + 60 * .02;
         }
         state->word = 0;

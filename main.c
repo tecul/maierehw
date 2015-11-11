@@ -6,6 +6,7 @@
 #include "tracking_manager.h"
 #include "demod_impl.h"
 #include "ephemeris_impl.h"
+#include "pvt_4_sat.h"
 
 int main(int argc, char **argv)
 {
@@ -22,6 +23,7 @@ int main(int argc, char **argv)
     struct demod_itf *demod_itf = create_demod();
     struct demod_word_itf *demod_word_itf = create_demod_word();
     struct ephemeris_itf *ephemeris_itf = create_ephemeris();
+    struct pvt_itf *pvt_itf = create_pvt_4_sat();
 
     /* configure world */
     acquisition_itf->init(acquisition_itf, 1 << 8/*~0*/);
@@ -38,6 +40,7 @@ int main(int argc, char **argv)
     demod_itf->destroy(demod_itf);
     demod_word_itf->destroy(demod_word_itf);
     ephemeris_itf->destroy(ephemeris_itf);
+    pvt_itf->destroy(pvt_itf);
 
     return 0;
 }
