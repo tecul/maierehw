@@ -4,5 +4,6 @@
 #include "ephemeris.h"
 struct ephemeris_itf *create_ephemeris(void);
 struct ephemeris_dumper_itf *create_ephemeris_dumper(void);
+struct ephemeris_loader_itf *create_ephemeris_loader(void);
 
 #endif
