@@ -23,6 +23,7 @@ int main(int argc, char **argv)
     struct demod_itf *demod_itf = create_demod();
     struct demod_word_itf *demod_word_itf = create_demod_word();
     struct ephemeris_itf *ephemeris_itf = create_ephemeris();
+    //struct ephemeris_dumper_itf *ephemeris_dumper_itf = create_ephemeris_dumper();
     struct pvt_itf *pvt_itf = create_pvt_4_sat();
 
     /* configure world */
@@ -40,6 +41,7 @@ int main(int argc, char **argv)
     demod_itf->destroy(demod_itf);
     demod_word_itf->destroy(demod_word_itf);
     ephemeris_itf->destroy(ephemeris_itf);
+    //ephemeris_dumper_itf->destroy(ephemeris_dumper_itf);
     pvt_itf->destroy(pvt_itf);
 
     return 0;
