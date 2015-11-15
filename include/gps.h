@@ -13,6 +13,12 @@
         (type *)( (char *)__mptr - offsetof(type,member) );})
 
 static const double gps_pi = 3.1415926535898;
+static const double c = 299792458;
+static const double mu = 398600500000000;
+static const double F = -4.442807633e-10;
+static const double omega_ie = 7.2921151467e-5;
+static const double ep = .00335281066474;
+static const double ae = 6378137;
 
 struct subframe1 {
     int tow;

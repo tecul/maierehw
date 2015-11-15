@@ -28,7 +28,7 @@ int main(int argc, char **argv)
     struct pvt_itf *pvt_itf = create_pvt_4_sat();
 
     /* configure world */
-    acquisition_itf->init(acquisition_itf, 1 << 8/*~0*/);
+    acquisition_itf->init(acquisition_itf, (1 << 29) | (1 << 7) | (1 << 8) | (1 << 27)   /*1 << 8*//*~0*/);
     /* run it */
     while(source_itf->read_one_ms(source_itf, msg_payload_new_one_ms_buffer.file_source_buffer) == 0) {
         publish(&msg);
