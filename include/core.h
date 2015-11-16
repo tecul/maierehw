@@ -59,6 +59,12 @@ struct msg_payload_new_ephemeris {
     struct eph eph;
 };
 
+struct msg_payload_new_pvt_raw {
+    double x;
+    double y;
+    double z;
+};
+
 struct subscriber {
     void (*notify)(struct subscriber *subscriber, struct msg *msg);
 };

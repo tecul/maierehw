@@ -1,3 +1,4 @@
 *.o
 ephemeris_*.bin
+*.kml
 maierehw

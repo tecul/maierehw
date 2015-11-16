@@ -7,6 +7,7 @@
 #include "demod_impl.h"
 #include "ephemeris_impl.h"
 #include "pvt_4_sat.h"
+#include "pvt_cook.h"
 
 int main(int argc, char **argv)
 {
@@ -24,11 +25,12 @@ int main(int argc, char **argv)
     struct demod_word_itf *demod_word_itf = create_demod_word();
     struct ephemeris_itf *ephemeris_itf = create_ephemeris();
     //struct ephemeris_dumper_itf *ephemeris_dumper_itf = create_ephemeris_dumper();
-    struct ephemeris_loader_itf *ephemeris_loader_itf = create_ephemeris_loader();
+    //struct ephemeris_loader_itf *ephemeris_loader_itf = create_ephemeris_loader();
     struct pvt_itf *pvt_itf = create_pvt_4_sat();
+    struct pvt_cook_itf *pvt_cook_itf = create_pvt_cook();
 
     /* configure world */
-    acquisition_itf->init(acquisition_itf, (1 << 29) | (1 << 7) | (1 << 8) | (1 << 27)   /*1 << 8*//*~0*/);
+    acquisition_itf->init(acquisition_itf, /*(1 << 29) | (1 << 7) | (1 << 8) | (1 << 27)*/   /*1 << 8*/~0);
     /* run it */
     while(source_itf->read_one_ms(source_itf, msg_payload_new_one_ms_buffer.file_source_buffer) == 0) {
         publish(&msg);
@@ -43,8 +45,9 @@ int main(int argc, char **argv)
     demod_word_itf->destroy(demod_word_itf);
     ephemeris_itf->destroy(ephemeris_itf);
     //ephemeris_dumper_itf->destroy(ephemeris_dumper_itf);
-    ephemeris_loader_itf->destroy(ephemeris_loader_itf);
+    //ephemeris_loader_itf->destroy(ephemeris_loader_itf);
     pvt_itf->destroy(pvt_itf);
+    pvt_cook_itf->destroy(pvt_cook_itf);
 
     return 0;
 }

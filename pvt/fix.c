@@ -4,7 +4,7 @@
 #include <assert.h>
 
 #include "core.h"
-#include "pvt_4_sat.h"
+#include "fix.h"
 
 struct pseudo_info {
     double time[4];
@@ -381,20 +381,30 @@ static double compute_L(double Lc)
     return L;
 }
 
-static print_solution(struct pos *pos)
+static print_solution(struct position *position)
+{
+    struct coordinate coordinate ;
+
+    compute_coordinate(position, &coordinate);
+
+    printf("Latitude / Longitude / altitude = %.15g %.15g %.15g\n", coordinate.latitude, coordinate.longitude, coordinate.altitude);
+}
+
+void compute_coordinate(struct position *position, struct coordinate *coordinate)
 {
     double Lc, l , L, h;
-    double xu = pos->x;
-    double yu = pos->y;
-    double zu = pos->z;
-    double bu = pos->b;
+    double xu = position->x;
+    double yu = position->y;
+    double zu = position->z;
 
     Lc = atan(zu / sqrt(xu * xu + yu * yu));
     l = atan(yu / xu);
     L = compute_L(Lc);
     h = sqrt(xu*xu+yu*yu+zu*zu) - ae * (1 - ep * sin(L) *sin(L));
-    printf("Latitude / Longitude = %.15g %.15g\n", L * 180 / gps_pi, l * 180 / gps_pi);
-    printf("Altitude  = %.15g\n", h);
+
+    coordinate->latitude = L * 180 / gps_pi;
+    coordinate->longitude = l * 180 / gps_pi;
+    coordinate->altitude = h;
 }
 
 void compute_fix(struct pvt_info *info, struct position *position)
@@ -407,7 +417,8 @@ void compute_fix(struct pvt_info *info, struct position *position)
     find_pseudo(&fix.pseudo, info);
     for (i = 0; i < 3; ++i)
         find_solution(&fix, info);
-    print_solution(&fix.user);
-    if (fix_nb++ == 4)
-        exit(-1);
+    position->x = fix.user.x;
+    position->y = fix.user.y;
+    position->z = fix.user.z;
+    //print_solution(position);
 }
