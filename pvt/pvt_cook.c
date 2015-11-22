@@ -32,8 +32,8 @@ static void new_pvt_raw_notify(struct subscriber *subscriber, struct msg *msg)
         position.y = pvt_cook->y_sum / 50;
         position.z = pvt_cook->z_sum / 50;
         compute_coordinate(&position, &coordinate);
-        printf("Latitude / Longitude / altitude = %.15g %.15g %.15g\n", coordinate.latitude, coordinate.longitude, coordinate.altitude);
-        //printf("%.15g,%.15g,%.15g\n", coordinate.longitude, coordinate.latitude, coordinate.altitude);
+        //printf("Latitude / Longitude / altitude = %.15g %.15g %.15g\n", coordinate.latitude, coordinate.longitude, coordinate.altitude);
+        printf("%.15g,%.15g,%.15g\n", coordinate.longitude, coordinate.latitude, coordinate.altitude);
         pvt_cook->x_sum = pvt_cook->y_sum = pvt_cook->z_sum = 0;
         pvt_cook->counter = 0;
     }

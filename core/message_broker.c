@@ -4,7 +4,14 @@
 #include <stdlib.h>
 
 #include "core.h"
- 
+
+#ifndef LIST_FOREACH_SAFE
+#define LIST_FOREACH_SAFE(var, head, field, tvar)                  \
+    for ((var) = ((head)->lh_first);                \
+        (var) && ((tvar) = LIST_NEXT((var), field), 1);      \
+        (var) = (tvar))
+#endif
+
 struct subscriber_list_entry {
     LIST_ENTRY(subscriber_list_entry) entries;
     struct subscriber *subscriber;
@@ -88,9 +95,9 @@ void publish(struct msg *msg)
 
     if (msg_type_list_entry) {
         struct subscriber_list_entry *subscriber_list_entry;
+        struct subscriber_list_entry *tmp;
 
-        /* use LIST_FOREACH_SAFE so we can call unsubscribe when in notify */
-        LIST_FOREACH(subscriber_list_entry, &msg_type_list_entry->subscribers, entries) {
+        LIST_FOREACH_SAFE(subscriber_list_entry, &msg_type_list_entry->subscribers, entries, tmp) {
             subscriber_list_entry->subscriber->notify(subscriber_list_entry->subscriber, msg);
         }
     }

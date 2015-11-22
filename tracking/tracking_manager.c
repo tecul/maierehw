@@ -68,7 +68,7 @@ struct tracking_manager_itf *create_tracking_manager(int max_channels_nb)
     tracking_manager->new_satellite_detected_subscriber.notify = new_satellite_detected_notify;
     subscribe(&tracking_manager->new_satellite_detected_subscriber, "new_satellite_detected");
     tracking_manager->tracking_look_unlock_or_lock_failure_subscriber.notify = tracking_look_unlock_or_lock_failure_notify;
-    subscribe(&tracking_manager->tracking_look_unlock_or_lock_failure_subscriber, "tracking_look_unlock_or_lock_failure_subscriber");
+    subscribe(&tracking_manager->tracking_look_unlock_or_lock_failure_subscriber, "tracking_look_unlock_or_lock_failure");
 
     return &tracking_manager->tracking_manager_itf;
 }

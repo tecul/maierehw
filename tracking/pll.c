@@ -161,8 +161,7 @@ static void send_msg_tracking_look_unlock_or_lock_failure(int satellite_nb)
     struct msg_payload_tracking_look_unlock_or_lock_failure msg_payload_tracking_look_unlock_or_lock_failure;
     struct msg msg;
 
-    printf("lost in space forever for %d\n", satellite_nb + 1);
-    printf("sat_nb %d unlock_or_lock_failure !!!!\n", satellite_nb + 1);
+    printf("loose lock or lock failure for satellite %d\n", satellite_nb + 1);
     msg.msg_type = "tracking_look_unlock_or_lock_failure";
     msg.msg_payload = &msg_payload_tracking_look_unlock_or_lock_failure;
     msg_payload_tracking_look_unlock_or_lock_failure.satellite_nb = satellite_nb;

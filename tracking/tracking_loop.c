@@ -53,7 +53,7 @@ static void send_msg_tracking_look_unlock_or_lock_failure(int satellite_nb)
     struct msg_payload_tracking_look_unlock_or_lock_failure msg_payload_tracking_look_unlock_or_lock_failure;
     struct msg msg;
 
-    printf("lost in space forever for %d\n", satellite_nb + 1);
+    printf("loose lock or lock failure for satellite %d\n", satellite_nb + 1);
     msg.msg_type = "tracking_look_unlock_or_lock_failure";
     msg.msg_payload = &msg_payload_tracking_look_unlock_or_lock_failure;
     msg_payload_tracking_look_unlock_or_lock_failure.satellite_nb = satellite_nb;
@@ -163,9 +163,7 @@ static void new_one_ms_buffer_notify(struct subscriber *subscriber, struct msg *
             break;
         case TL_FAIL_STATE:
             /* auto destroy */
-            //printf("lost in space forever for %d\n", tracking_loop->satellite_nb + 1);
-            /* fixme it done here message broker may crash .... */
-            /* need to better handle these destructions */
+            destroy(&tracking_loop->tracking_loop_itf);
             break;
         default:
             assert(0);
