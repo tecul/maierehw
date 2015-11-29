@@ -1,14 +1,16 @@
 #include <stdio.h>
 
 #include "core.h"
-#include "file_source.h"
-#include "acquisition_basic.h"
-#include "tracking_manager.h"
-#include "demod_impl.h"
-#include "ephemeris_impl.h"
-#include "pvt_4_sat.h"
-#include "pvt_cook.h"
 
+
+#if 1
+int main(int argc , char **argv)
+{
+    init_event_module();
+    publish(allocate_event(EVT_QUEUE_EMPTY));
+    event_loop();
+}
+#else
 int main(int argc, char **argv)
 {
     struct msg_payload_new_one_ms_buffer msg_payload_new_one_ms_buffer;
@@ -51,3 +53,4 @@ int main(int argc, char **argv)
 
     return 0;
 }
+#endif

@@ -2,71 +2,27 @@
 #define __CORE__
 
 #include <complex.h>
+#include <libr/list.h>
 #include "gps.h"
 
-struct msg {
-    char *msg_type;
-    void *msg_payload;
+typedef enum event_type {
+    EVT_QUEUE_EMPTY,
+    EVT_NB
+} event_type_t;
+
+struct event {
+    enum event_type type;
+    int size;
+    struct list_head list;
 };
 
-struct msg_payload_new_one_ms_buffer {
-    unsigned long first_sample_time_in_ms;
-    FLOAT complex file_source_buffer[GPS_SAMPLING_RATE / 1000];
-};
-
-struct msg_payload_new_satellite_detected {
-    int satellite_nb;
-    int doppler_freq;
-    unsigned int ca_shift;
-    double treshold_use;
-};
-
-struct msg_payload_tracking_loop_lock {
-    int satellite_nb;
-};
-
-struct msg_payload_tracking_look_unlock_or_lock_failure {
-    int satellite_nb;
-};
-
-struct msg_payload_new_pll_bit {
-    int satellite_nb;
-    int value;
-    double timestamp;
-};
-
-struct msg_payload_new_demod_bit {
-    int satellite_nb;
-    int value;
-    double timestamp;
-};
-
-struct msg_payload_new_demod_bit_timestamped {
-    int satellite_nb;
-    int value;
-    double timestamp;
-    double gps_time;
-};
-
-struct msg_payload_new_word {
-    int satellite_nb;
-    int word;
-    int index;
-};
-
-struct msg_payload_new_ephemeris {
-    int satellite_nb;
-    struct eph eph;
-};
-
-struct msg_payload_new_pvt_raw {
-    double x;
-    double y;
-    double z;
+struct event_queue_empty {
+    struct event evt;
 };
 
 struct subscriber {
-    void (*notify)(struct subscriber *subscriber, struct msg *msg);
+    struct list_head list;
+    void (*notify)(struct subscriber *subscriber, struct event *evt);
 };
 
 struct itf_acquisition_freq_range {
@@ -87,10 +43,17 @@ struct itf_acquisition_sat_status {
     double treshold_use;
 };
 
-void subscribe(struct subscriber *subscriber, char *msg_type);
-void unsubscribe(struct subscriber *subscriber, char *msg_type);
-void publish(struct msg *msg);
+struct event *allocate_event(event_type_t event_type);
+void deallocate_event(struct event *evt);
+void init_event_module();
+void subscribe(struct subscriber *subscriber, event_type_t event_type);
+void unsubscribe(struct subscriber *subscriber, event_type_t event_type);
+void publish(struct event *evt);
+void event_loop();
+
 void detect_one_satellite(FLOAT complex *one_ms_buffer, int satellite_nb, double treshold_to_use, struct itf_acquisition_freq_range *frange,
                           struct itf_acquisition_shift_range *srange, struct itf_acquisition_sat_status *sat_status);
+
+
 
 #endif
