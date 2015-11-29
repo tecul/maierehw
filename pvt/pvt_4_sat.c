@@ -5,8 +5,7 @@
 #include <stdint.h>
 #include <math.h>
 
-#include "core.h"
-#include "pvt_4_sat.h"
+#include "pvt.h"
 #include "fix.h"
 
 enum state {
@@ -20,27 +19,23 @@ struct eph_info {
 };
 
 struct pvt {
-    struct pvt_itf pvt_itf;
     struct subscriber new_demod_bit_timestamped_subscriber;
     struct subscriber new_ephemeris_subscriber;
     int index;
     struct eph_info ephs[4];
     enum state state;
     int demod_queue_idx;
-    struct msg_payload_new_demod_bit_timestamped demod_queue[4];
+    struct event_demod_bit_timestamped demod_queue[4];
 };
 
 static void send_msg_new_pvt_raw(struct position *position)
 {
-    struct msg_payload_new_pvt_raw msg_payload_new_pvt_raw;
-    struct msg msg;
+    struct event_pvt_raw *event = (struct event_pvt_raw *) allocate_event(EVT_PVT_RAW);
 
-    msg.msg_type = "new_pvt_raw";
-    msg.msg_payload = &msg_payload_new_pvt_raw;
-    msg_payload_new_pvt_raw.x = position->x;
-    msg_payload_new_pvt_raw.y = position->y;
-    msg_payload_new_pvt_raw.z = position->z;
-    publish(&msg);
+    event->x = position->x;
+    event->y = position->y;
+    event->z = position->z;
+    publish(&event->evt);
 }
 
 static int can_compute_pos(struct pvt *pvt)
@@ -84,74 +79,73 @@ static void compute_pos(struct pvt *pvt)
     send_msg_new_pvt_raw(&position);
 }
 
-static int satellite_nb_ok(struct pvt *pvt, struct msg_payload_new_demod_bit_timestamped *payload)
+static int satellite_nb_ok(struct pvt *pvt, struct event_demod_bit_timestamped *event)
 {
     int i;
 
     for (i = 0; i < 4; ++i) {
-        if (payload->satellite_nb == pvt->ephs[i].satellite_nb)
+        if (event->satellite_nb == pvt->ephs[i].satellite_nb)
             return 1;
     }
 
     return 0;
 }
 
-static void new_demod_bit_timestamped_notify(struct subscriber *subscriber, struct msg *msg)
+static void new_demod_bit_timestamped_notify(struct subscriber *subscriber, struct event *evt)
 {
-    struct msg_payload_new_demod_bit_timestamped *payload = (struct msg_payload_new_demod_bit_timestamped *) msg->msg_payload;
+    struct event_demod_bit_timestamped *event = container_of(evt, struct event_demod_bit_timestamped, evt);
     struct pvt *pvt = container_of(subscriber, struct pvt, new_demod_bit_timestamped_subscriber);
 
-    if (pvt->state == PVT4_RUNNING && satellite_nb_ok(pvt, payload)) {
-        //printf("DEMOD [%2d] : %d / %.15lg / %.15lg\n", payload->satellite_nb, payload->value, payload->timestamp, payload->gps_time);
-        pvt->demod_queue[pvt->demod_queue_idx++ % 4] = *payload;
+    if (pvt->state == PVT4_RUNNING && satellite_nb_ok(pvt, event)) {
+        //printf("DEMOD [%2d] : %d / %.15lg / %.15lg\n", event->satellite_nb, event->value, event->timestamp, event->gps_time);
+        pvt->demod_queue[pvt->demod_queue_idx++ % 4] = *event;
         if (can_compute_pos(pvt))
             compute_pos(pvt);
     }
 }
 
-static void new_ephemeris_notify(struct subscriber *subscriber, struct msg *msg)
+static void new_ephemeris_notify(struct subscriber *subscriber, struct event *evt)
 {
-    struct msg_payload_new_ephemeris *payload = (struct msg_payload_new_ephemeris *) msg->msg_payload;
+    struct event_ephemeris *event = container_of(evt, struct event_ephemeris, evt);
     struct pvt *pvt = container_of(subscriber, struct pvt, new_ephemeris_subscriber);
 
     if (pvt->index < 4) {
-        pvt->ephs[pvt->index].eph = payload->eph;
-        pvt->ephs[pvt->index++].satellite_nb = payload->satellite_nb;
+        pvt->ephs[pvt->index].eph = event->eph;
+        pvt->ephs[pvt->index++].satellite_nb = event->satellite_nb;
         if (pvt->index == 4)
             pvt->state = PVT4_RUNNING;
     } else {
         int i;
 
         for (i = 0; i < 4; i++) {
-            if (pvt->ephs[i].satellite_nb == payload->satellite_nb)
-                pvt->ephs[i].eph = payload->eph;
+            if (pvt->ephs[i].satellite_nb == event->satellite_nb)
+                pvt->ephs[i].eph = event->eph;
         }
     }
 }
 
-static void destroy(struct pvt_itf *pvt_itf)
-{
-    struct pvt *pvt = container_of(pvt_itf, struct pvt, pvt_itf);
-
-    unsubscribe(&pvt->new_demod_bit_timestamped_subscriber, "new_demod_bit_timestamped");
-    unsubscribe(&pvt->new_ephemeris_subscriber, "new_ephemeris");
-
-    free(pvt);
-}
-
 /* public api */
-struct pvt_itf *create_pvt_4_sat()
+handle create_pvt_4_sat()
 {
     struct pvt *pvt = (struct pvt *) malloc(sizeof(struct pvt));
 
     assert(pvt);
     memset(pvt, 0, sizeof(struct pvt));
-    pvt->pvt_itf.destroy = destroy;
     pvt->new_demod_bit_timestamped_subscriber.notify = new_demod_bit_timestamped_notify;
-    subscribe(&pvt->new_demod_bit_timestamped_subscriber, "new_demod_bit_timestamped");
+    subscribe(&pvt->new_demod_bit_timestamped_subscriber, EVT_DEMOD_BIT_TIMESTAMPED);
     pvt->new_ephemeris_subscriber.notify = new_ephemeris_notify;
-    subscribe(&pvt->new_ephemeris_subscriber, "new_ephemeris");
+    subscribe(&pvt->new_ephemeris_subscriber, EVT_EPHEMERIS);
 
-    return &pvt->pvt_itf;
+    return pvt;
+}
+
+void destroy_pvt_4_sat(handle hdl)
+{
+    struct pvt *pvt = (struct pvt *) hdl;
+
+    unsubscribe(&pvt->new_demod_bit_timestamped_subscriber, EVT_DEMOD_BIT_TIMESTAMPED);
+    unsubscribe(&pvt->new_ephemeris_subscriber, EVT_EPHEMERIS);
+
+    free(pvt);
 }
 

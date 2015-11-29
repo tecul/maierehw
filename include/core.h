@@ -20,6 +20,7 @@ typedef enum event_type {
     EVT_DEMOD_BIT_TIMESTAMPED,
     EVT_WORD,
     EVT_EPHEMERIS,
+    EVT_PVT_RAW,
     EVT_NB
 } event_type_t;
 
@@ -94,6 +95,13 @@ struct event_ephemeris {
     struct event evt;
     int satellite_nb;
     struct eph eph;
+};
+
+struct event_pvt_raw {
+    struct event evt;
+    double x;
+    double y;
+    double z;
 };
 
 struct subscriber {

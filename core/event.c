@@ -54,6 +54,7 @@ struct event *allocate_event(event_type_t event_type)
         CASE_ALLOCATE_EVENT(EVT_DEMOD_BIT_TIMESTAMPED, event_demod_bit_timestamped);
         CASE_ALLOCATE_EVENT(EVT_WORD, event_word);
         CASE_ALLOCATE_EVENT(EVT_EPHEMERIS, event_ephemeris);
+        CASE_ALLOCATE_EVENT(EVT_PVT_RAW, event_pvt_raw);
         default:
             assert(0);
     }
