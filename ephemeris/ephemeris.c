@@ -5,8 +5,7 @@
 #include <stdint.h>
 #include <math.h>
 
-#include "core.h"
-#include "ephemeris_impl.h"
+#include "ephemeris.h"
 
 struct raw_eph {
     int words[5][10];
@@ -16,7 +15,6 @@ struct raw_eph {
 };
 
 struct ephemeris {
-    struct ephemeris_itf ephemeris_itf;
     struct subscriber new_word_subscriber;
     struct raw_eph ephs[SAT_NB];
 };
@@ -112,25 +110,22 @@ static void convert_from_raw(struct raw_eph *raw, struct eph *eph) {
 
 static void send_msg_payload_new_ephemeris(int satellite_nb, struct raw_eph *raw)
 {
-    struct msg_payload_new_ephemeris msg_payload_new_ephemeris;
-    struct msg msg;
+    struct event_ephemeris *event = (struct event_ephemeris *) allocate_event(EVT_EPHEMERIS);
 
-    msg.msg_type = "new_ephemeris";
-    msg.msg_payload = &msg_payload_new_ephemeris;
-    msg_payload_new_ephemeris.satellite_nb = satellite_nb;
-    convert_from_raw(raw, &msg_payload_new_ephemeris.eph);
-    publish(&msg);
+    event->satellite_nb = satellite_nb;
+    convert_from_raw(raw, &event->eph);
+    publish(&event->evt);
 }
 
-static void new_word_notify(struct subscriber *subscriber, struct msg *msg)
+static void new_word_notify(struct subscriber *subscriber, struct event *evt)
 {
-    struct msg_payload_new_word *payload = (struct msg_payload_new_word *) msg->msg_payload;
+    struct event_word *event = container_of(evt, struct event_word, evt);
     struct ephemeris *ephemeris = container_of(subscriber, struct ephemeris, new_word_subscriber);
-    struct raw_eph *raw = &ephemeris->ephs[payload->satellite_nb];
+    struct raw_eph *raw = &ephemeris->ephs[event->satellite_nb];
 
-    //printf("%2d : [%d] = 0x%08x\n", payload->satellite_nb, payload->index, payload->word);
-    if (raw->index == payload->index)
-        raw->word[raw->index++] = payload->word;
+    //printf("%2d : [%d] = 0x%08x\n", event->satellite_nb, event->index, event->word);
+    if (raw->index == event->index)
+        raw->word[raw->index++] = event->word;
     if (raw->index == 10) {
         int i;
         int sf_index;
@@ -145,7 +140,7 @@ static void new_word_notify(struct subscriber *subscriber, struct msg *msg)
         if (sf_index == raw->sf_index) {
             memcpy(raw->words[raw->sf_index++], raw->word, sizeof(raw->word));
             if (raw->sf_index == 5) {
-                send_msg_payload_new_ephemeris(payload->satellite_nb, raw);
+                send_msg_payload_new_ephemeris(event->satellite_nb, raw);
                 raw->sf_index = 0;
             }
         }
@@ -153,25 +148,24 @@ static void new_word_notify(struct subscriber *subscriber, struct msg *msg)
     }
 }
 
-static void destroy(struct ephemeris_itf *ephemeris_itf)
-{
-    struct ephemeris *ephemeris = container_of(ephemeris_itf, struct ephemeris, ephemeris_itf);
-
-    unsubscribe(&ephemeris->new_word_subscriber, "new_word");
-
-    free(ephemeris);
-}
-
 /* public api */
-struct ephemeris_itf *create_ephemeris()
+handle create_ephemeris()
 {
     struct ephemeris *ephemeris = (struct ephemeris *) malloc(sizeof(struct ephemeris));
 
     assert(ephemeris);
     memset(ephemeris, 0, sizeof(struct ephemeris));
-    ephemeris->ephemeris_itf.destroy = destroy;
     ephemeris->new_word_subscriber.notify = new_word_notify;
-    subscribe(&ephemeris->new_word_subscriber, "new_word");
+    subscribe(&ephemeris->new_word_subscriber, EVT_WORD);
 
-    return &ephemeris->ephemeris_itf;
+    return ephemeris;
+}
+
+void destroy_ephemeris(handle hdl)
+{
+    struct ephemeris *ephemeris = (struct ephemeris *) hdl;
+
+    unsubscribe(&ephemeris->new_word_subscriber, EVT_WORD);
+
+    free(ephemeris);
 }

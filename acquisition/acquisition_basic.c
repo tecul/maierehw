@@ -62,13 +62,13 @@ static void new_one_ms_buffer_notify(struct subscriber *subscriber, struct event
     }
 }
 
-/*static void tracking_look_unlock_or_lock_failure_notify(struct subscriber *subscriber, struct msg *msg)
+static void tracking_look_unlock_or_lock_failure_notify(struct subscriber *subscriber, struct event *evt)
 {
-    struct msg_payload_tracking_look_unlock_or_lock_failure *msg_payload_tracking_look_unlock_or_lock_failure = (struct msg_payload_tracking_look_unlock_or_lock_failure *) msg->msg_payload;
+    struct event_tracking_loop_unlock_or_lock_failure *event = container_of(evt, struct event_tracking_loop_unlock_or_lock_failure, evt);
     struct acquisition_basic *acquisition_basic = container_of(subscriber, struct acquisition_basic, tracking_look_unlock_or_lock_failure_subscriber);
 
-    acquisition_basic->satellites |= 1 << (msg_payload_tracking_look_unlock_or_lock_failure->satellite_nb);
-}*/
+    acquisition_basic->satellites |= 1 << (event->satellite_nb);
+}
 
 /* public api */
 handle create_acquisition_basic(uint32_t satellites)
@@ -79,8 +79,8 @@ handle create_acquisition_basic(uint32_t satellites)
     acquisition_basic->satellites = satellites;
     acquisition_basic->new_one_ms_buffer_subscriber.notify = new_one_ms_buffer_notify;
     subscribe(&acquisition_basic->new_one_ms_buffer_subscriber, EVT_ONE_MS_BUFFER);
-    //acquisition_basic->tracking_look_unlock_or_lock_failure_subscriber.notify = tracking_look_unlock_or_lock_failure_notify;
-    //subscribe(&acquisition_basic->tracking_look_unlock_or_lock_failure_subscriber, "tracking_look_unlock_or_lock_failure");
+    acquisition_basic->tracking_look_unlock_or_lock_failure_subscriber.notify = tracking_look_unlock_or_lock_failure_notify;
+    subscribe(&acquisition_basic->tracking_look_unlock_or_lock_failure_subscriber, EVT_TRACKING_LOOP_UNLOCK_OR_LOCK_FAILURE);
 
     return (handle) acquisition_basic;
 }
@@ -90,6 +90,7 @@ void destroy_acquisition_basic(handle hdl)
     struct acquisition_basic *acquisition_basic = (struct acquisition_basic *) hdl;
 
     unsubscribe(&acquisition_basic->new_one_ms_buffer_subscriber, EVT_ONE_MS_BUFFER);
-    //unsubscribe(&acquisition_basic->tracking_look_unlock_or_lock_failure_subscriber, "tracking_look_unlock_or_lock_failure");
+    unsubscribe(&acquisition_basic->tracking_look_unlock_or_lock_failure_subscriber, EVT_TRACKING_LOOP_UNLOCK_OR_LOCK_FAILURE);
+
     free(acquisition_basic);
 }

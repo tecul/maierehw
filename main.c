@@ -4,6 +4,7 @@
 #include "file_source.h"
 #include "acquisition_basic.h"
 #include "tracking_manager.h"
+#include "demod.h"
 
 #if 1
 int main(int argc , char **argv)
@@ -15,6 +16,8 @@ int main(int argc , char **argv)
     handle file_source_handle = create_file_source(argv[1]);
     handle acquisition_basic = create_acquisition_basic((1 << 29) | (1 << 7) | (1 << 8) | (1 << 27)/*1 << 8*//*~0*/);
     handle tracking_manager = create_tracking_manager(8);
+    handle demod = create_demod();
+    handle demod_word = create_demod_word();
 
     /* start */
     publish(allocate_event(EVT_QUEUE_EMPTY));
@@ -24,6 +27,8 @@ int main(int argc , char **argv)
     destroy_file_source(file_source_handle);
     destroy_acquisition_basic(acquisition_basic);
     destroy_tracking_manager(tracking_manager);
+    destroy_demod(demod);
+    destroy_demod_word(demod_word);
 }
 #else
 int main(int argc, char **argv)

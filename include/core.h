@@ -16,6 +16,10 @@ typedef enum event_type {
     EVT_TRACKING_LOOP_LOCK,
     EVT_TRACKING_LOOP_UNLOCK_OR_LOCK_FAILURE,
     EVT_PLL_BIT,
+    EVT_DEMOD_BIT,
+    EVT_DEMOD_BIT_TIMESTAMPED,
+    EVT_WORD,
+    EVT_EPHEMERIS,
     EVT_NB
 } event_type_t;
 
@@ -62,6 +66,34 @@ struct event_pll_bit {
     int satellite_nb;
     int value;
     double timestamp;
+};
+
+struct event_demod_bit {
+    struct event evt;
+    int satellite_nb;
+    int value;
+    double timestamp;
+};
+
+struct event_demod_bit_timestamped {
+    struct event evt;
+    int satellite_nb;
+    int value;
+    double timestamp;
+    double gps_time;
+};
+
+struct event_word {
+    struct event evt;
+    int satellite_nb;
+    int word;
+    int index;
+};
+
+struct event_ephemeris {
+    struct event evt;
+    int satellite_nb;
+    struct eph eph;
 };
 
 struct subscriber {

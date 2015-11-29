@@ -50,6 +50,10 @@ struct event *allocate_event(event_type_t event_type)
         CASE_ALLOCATE_EVENT(EVT_TRACKING_LOOP_LOCK, event_tracking_loop_lock);
         CASE_ALLOCATE_EVENT(EVT_TRACKING_LOOP_UNLOCK_OR_LOCK_FAILURE, event_tracking_loop_unlock_or_lock_failure);
         CASE_ALLOCATE_EVENT(EVT_PLL_BIT, event_pll_bit);
+        CASE_ALLOCATE_EVENT(EVT_DEMOD_BIT, event_demod_bit);
+        CASE_ALLOCATE_EVENT(EVT_DEMOD_BIT_TIMESTAMPED, event_demod_bit_timestamped);
+        CASE_ALLOCATE_EVENT(EVT_WORD, event_word);
+        CASE_ALLOCATE_EVENT(EVT_EPHEMERIS, event_ephemeris);
         default:
             assert(0);
     }
