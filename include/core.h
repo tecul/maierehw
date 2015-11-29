@@ -5,8 +5,12 @@
 #include <libr/list.h>
 #include "gps.h"
 
+typedef void * handle;
+
 typedef enum event_type {
     EVT_QUEUE_EMPTY,
+    EVT_EXIT,
+    EVT_ONE_MS_BUFFER,
     EVT_NB
 } event_type_t;
 
@@ -18,6 +22,16 @@ struct event {
 
 struct event_queue_empty {
     struct event evt;
+};
+
+struct event_exit {
+    struct event evt;
+};
+
+struct event_one_ms_buffer {
+    struct event evt;
+    unsigned long first_sample_time_in_ms;
+    FLOAT complex file_source_buffer[GPS_SAMPLING_RATE / 1000];
 };
 
 struct subscriber {

@@ -20,23 +20,32 @@ static struct {
     pthread_mutex_t lock;
 } subscriber_list_heads[EVT_NB];
 
+static struct subscriber exit_subscriber;
+static int is_looping = 1;
 
 /* private functions */
-
+static void exit_notify(struct subscriber *subscriber, struct event *evt)
+{
+    is_looping = 0;
+}
 
 /* public api */
+#define CASE_ALLOCATE_EVENT(type_, name_) \
+case type_: \
+    evt = (struct event *) malloc(sizeof(struct name_)); \
+    evt->type = type_; \
+    evt->size = sizeof(struct name_); \
+    INIT_LIST_HEAD(&evt->list); \
+    break
+
 struct event *allocate_event(event_type_t event_type)
 {
     struct event *evt = NULL;
 
     switch(event_type) {
-        case EVT_QUEUE_EMPTY:
-            evt = (struct event *) malloc(sizeof(struct event_queue_empty));
-            assert(evt);
-            evt->type = EVT_QUEUE_EMPTY;
-            evt->size = sizeof(struct event_queue_empty);
-            INIT_LIST_HEAD(&evt->list);
-            break;
+        CASE_ALLOCATE_EVENT(EVT_QUEUE_EMPTY, event_queue_empty);
+        CASE_ALLOCATE_EVENT(EVT_EXIT, event_exit);
+        CASE_ALLOCATE_EVENT(EVT_ONE_MS_BUFFER, event_one_ms_buffer);
         default:
             assert(0);
     }
@@ -70,6 +79,9 @@ void init_event_module()
         res = pthread_mutex_init(&subscriber_list_heads[i].lock, &attr);
         assert(res == 0);
     }
+    /* subscribe to exit event */
+    exit_subscriber.notify = exit_notify;
+    subscribe(&exit_subscriber, EVT_EXIT);
 }
 
 void subscribe(struct subscriber *subscriber, event_type_t event_type)
@@ -80,7 +92,7 @@ void subscribe(struct subscriber *subscriber, event_type_t event_type)
 
     res = pthread_mutex_lock(lock);
     assert(res == 0);
-    list_add_tail(&subscriber->list, head);
+    list_add(&subscriber->list, head);
     res = pthread_mutex_lock(lock);
     assert(res == 0);
 }
@@ -117,7 +129,7 @@ void event_loop()
     struct list_head *safe;
     struct event *evt;
 
-    while(sem_wait(&event_queue.counter) == 0) {
+    while(is_looping && sem_wait(&event_queue.counter) == 0) {
         /* pop entry */
         res = pthread_mutex_lock(&event_queue.lock);
         assert(res == 0);
@@ -127,7 +139,7 @@ void event_loop()
         assert(res == 0);
         /* call all subscribers */
         evt = container_of(entry, struct event, list);
-        fprintf(stderr, "evt %d\n", evt->type);
+        //fprintf(stderr, "evt %d\n", evt->type);
         {
             struct list_head *head = &subscriber_list_heads[evt->type].head;
             pthread_mutex_t *lock = &subscriber_list_heads[evt->type].lock;
@@ -144,7 +156,10 @@ void event_loop()
             assert(res == 0);
         }
         /* delete event */
-        fprintf(stderr, "evt %d done\n", evt->type);
+        //fprintf(stderr, "evt %d done\n", evt->type);
         free(evt);
+        /* is list empty. Lock is not need */
+        if (list_empty(&event_queue.head))
+            publish(allocate_event(EVT_QUEUE_EMPTY));
     }
 }

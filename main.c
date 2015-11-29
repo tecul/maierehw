@@ -1,14 +1,24 @@
 #include <stdio.h>
 
 #include "core.h"
+#include "file_source.h"
 
 
 #if 1
 int main(int argc , char **argv)
 {
+    /* first need to init event_module */
     init_event_module();
+
+    /* create world */
+    handle file_source_handle = create_file_source(argv[1]);
+
+    /* start */
     publish(allocate_event(EVT_QUEUE_EMPTY));
     event_loop();
+
+    /* destroy world */
+    destroy_file_source(file_source_handle);
 }
 #else
 int main(int argc, char **argv)
