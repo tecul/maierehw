@@ -3,6 +3,7 @@
 
 #include <complex.h>
 #include <libr/list.h>
+#include <stdint.h>
 #include "gps.h"
 
 typedef void * handle;
@@ -11,6 +12,7 @@ typedef enum event_type {
     EVT_QUEUE_EMPTY,
     EVT_EXIT,
     EVT_ONE_MS_BUFFER,
+    EVT_SATELLITE_DETECTED,
     EVT_NB
 } event_type_t;
 
@@ -32,6 +34,14 @@ struct event_one_ms_buffer {
     struct event evt;
     unsigned long first_sample_time_in_ms;
     FLOAT complex file_source_buffer[GPS_SAMPLING_RATE / 1000];
+};
+
+struct event_satellite_detected {
+    struct event evt;
+    int satellite_nb;
+    int doppler_freq;
+    unsigned int ca_shift;
+    double treshold_use;
 };
 
 struct subscriber {

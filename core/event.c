@@ -46,6 +46,7 @@ struct event *allocate_event(event_type_t event_type)
         CASE_ALLOCATE_EVENT(EVT_QUEUE_EMPTY, event_queue_empty);
         CASE_ALLOCATE_EVENT(EVT_EXIT, event_exit);
         CASE_ALLOCATE_EVENT(EVT_ONE_MS_BUFFER, event_one_ms_buffer);
+        CASE_ALLOCATE_EVENT(EVT_SATELLITE_DETECTED, event_satellite_detected);
         default:
             assert(0);
     }

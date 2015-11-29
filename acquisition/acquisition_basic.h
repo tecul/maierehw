@@ -1,8 +1,9 @@
 #ifndef __ACQUISITION_BASIC__
 #define __ACQUISITION_BASIC__
 
-#include "acquisition.h"
+#include "core.h"
 
-struct acquisition_itf *create_acquisition_basic();
+handle create_acquisition_basic(uint32_t satellites);
+void destroy_acquisition_basic(handle hdl);
 
 #endif

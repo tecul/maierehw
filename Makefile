@@ -3,7 +3,7 @@ VPATH=core:source:acquisition:tracking:demod:ephemeris:pvt
 CFLAGS=-Iinclude -Isource -Iacquisition -Itracking -Idemod -Iephemeris -Ipvt -O2 -g
 LDFLAGS=-lm
 
-maierehw: main.o core.o event.o file_source.o
+maierehw: main.o core.o event.o file_source.o acquisition_basic.o
 	$(CC) $(LDFLAGS) $^ $(LDFLAGS) -o $@ -lpthread
 
 clean:
