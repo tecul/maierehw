@@ -13,6 +13,9 @@ typedef enum event_type {
     EVT_EXIT,
     EVT_ONE_MS_BUFFER,
     EVT_SATELLITE_DETECTED,
+    EVT_TRACKING_LOOP_LOCK,
+    EVT_TRACKING_LOOP_UNLOCK_OR_LOCK_FAILURE,
+    EVT_PLL_BIT,
     EVT_NB
 } event_type_t;
 
@@ -42,6 +45,23 @@ struct event_satellite_detected {
     int doppler_freq;
     unsigned int ca_shift;
     double treshold_use;
+};
+
+struct event_tracking_loop_lock {
+    struct event evt;
+    int satellite_nb;
+};
+
+struct event_tracking_loop_unlock_or_lock_failure {
+    struct event evt;
+    int satellite_nb;
+};
+
+struct event_pll_bit {
+    struct event evt;
+    int satellite_nb;
+    int value;
+    double timestamp;
 };
 
 struct subscriber {

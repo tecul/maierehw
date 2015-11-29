@@ -79,9 +79,9 @@ static double filter(double in, double *mem)
     return in * c1 + *mem;
 }
 
-static void pll_add_buffer(struct pll *pll, struct msg_payload_new_one_ms_buffer *payload)
+static void pll_add_buffer(struct pll *pll, struct event_one_ms_buffer *evt)
 {
-    pll->buffer[pll->buffer_write_index] = *payload;
+    pll->buffer[pll->buffer_write_index] = *evt;
     pll->buffer_write_index = 1 - pll->buffer_write_index;
     pll->sample_nb += SAMPLE_NB_PER_MS;
 }
@@ -146,39 +146,30 @@ static int pll_compute_bit(struct pll *pll, FLOAT complex *buf, double *time_sta
 
 static void send_msg_tracking_loop_lock(int satellite_nb, double timestamp)
 {
-    struct msg_payload_tracking_loop_lock msg_payload_tracking_loop_lock;
-    struct msg msg;
+    struct event_tracking_loop_lock *event = (struct event_tracking_loop_lock *) allocate_event(EVT_TRACKING_LOOP_LOCK);
 
     printf("sat_nb %d locked (%lg ms) !!!!\n", satellite_nb + 1, timestamp);
-    msg.msg_type = "tracking_loop_lock";
-    msg.msg_payload = &msg_payload_tracking_loop_lock;
-    msg_payload_tracking_loop_lock.satellite_nb = satellite_nb;
-    publish(&msg);
+    event->satellite_nb = satellite_nb;
+    publish(&event->evt);
 }
 
 static void send_msg_tracking_look_unlock_or_lock_failure(int satellite_nb)
 {
-    struct msg_payload_tracking_look_unlock_or_lock_failure msg_payload_tracking_look_unlock_or_lock_failure;
-    struct msg msg;
+    struct event_tracking_loop_unlock_or_lock_failure *event = (struct event_tracking_loop_unlock_or_lock_failure *) allocate_event(EVT_TRACKING_LOOP_UNLOCK_OR_LOCK_FAILURE);
 
     printf("loose lock or lock failure for satellite %d\n", satellite_nb + 1);
-    msg.msg_type = "tracking_look_unlock_or_lock_failure";
-    msg.msg_payload = &msg_payload_tracking_look_unlock_or_lock_failure;
-    msg_payload_tracking_look_unlock_or_lock_failure.satellite_nb = satellite_nb;
-    publish(&msg);
+    event->satellite_nb = satellite_nb;
+    publish(&event->evt);
 }
 
 static void send_msg_new_pll_bit(int satellite_nb, int value, double timestamp)
 {
-    struct msg_payload_new_pll_bit msg_payload_new_pll_bit;
-    struct msg msg;
+    struct event_pll_bit *event = (struct event_pll_bit *) allocate_event(EVT_PLL_BIT);
 
-    msg.msg_type = "new_pll_bit";
-    msg.msg_payload = &msg_payload_new_pll_bit;
-    msg_payload_new_pll_bit.satellite_nb = satellite_nb;
-    msg_payload_new_pll_bit.value = value;
-    msg_payload_new_pll_bit.timestamp = timestamp;
-    publish(&msg);
+    event->satellite_nb = satellite_nb;
+    event->value = value;
+    event->timestamp = timestamp;
+    publish(&event->evt);
 }
 
 /* public api */
@@ -192,11 +183,11 @@ void tl_init_pll_state(struct pll *pll, int sat_nb, int freq, unsigned int ca_sh
     pll->vco.freq = freq;
 }
 
-enum tracking_loop_state tl_pll_locking_handler(struct pll *pll, struct msg_payload_new_one_ms_buffer *payload)
+enum tracking_loop_state tl_pll_locking_handler(struct pll *pll, struct event_one_ms_buffer *evt)
 {
     double time_stamp;
 
-    pll_add_buffer(pll, payload);
+    pll_add_buffer(pll, evt);
 
     while (pll->sample_nb >= SAMPLE_NB_PER_MS) {
         FLOAT complex buf[SAMPLE_NB_PER_MS];
@@ -218,9 +209,9 @@ enum tracking_loop_state tl_pll_locking_handler(struct pll *pll, struct msg_payl
     return TL_PLL_LOCKING_STATE;
 }
 
-enum tracking_loop_state tl_pll_locked_handler(struct pll *pll, struct msg_payload_new_one_ms_buffer *payload)
+enum tracking_loop_state tl_pll_locked_handler(struct pll *pll, struct event_one_ms_buffer *evt)
 {
-    pll_add_buffer(pll, payload);
+    pll_add_buffer(pll, evt);
     while (pll->sample_nb >= SAMPLE_NB_PER_MS) {
         FLOAT complex buf[SAMPLE_NB_PER_MS];
         int bit;

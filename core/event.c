@@ -47,6 +47,9 @@ struct event *allocate_event(event_type_t event_type)
         CASE_ALLOCATE_EVENT(EVT_EXIT, event_exit);
         CASE_ALLOCATE_EVENT(EVT_ONE_MS_BUFFER, event_one_ms_buffer);
         CASE_ALLOCATE_EVENT(EVT_SATELLITE_DETECTED, event_satellite_detected);
+        CASE_ALLOCATE_EVENT(EVT_TRACKING_LOOP_LOCK, event_tracking_loop_lock);
+        CASE_ALLOCATE_EVENT(EVT_TRACKING_LOOP_UNLOCK_OR_LOCK_FAILURE, event_tracking_loop_unlock_or_lock_failure);
+        CASE_ALLOCATE_EVENT(EVT_PLL_BIT, event_pll_bit);
         default:
             assert(0);
     }

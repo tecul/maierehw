@@ -25,7 +25,6 @@ struct tl_acq_10_hz_state {
 };
 
 struct tracking_loop {
-    struct tracking_loop_itf tracking_loop_itf;
     struct subscriber new_one_ms_buffer_subscriber;
     int satellite_nb;
     enum tracking_loop_state state;
@@ -50,23 +49,20 @@ static void print_status(struct itf_acquisition_sat_status *sat_status)
 /* fixme : factorize this */
 static void send_msg_tracking_look_unlock_or_lock_failure(int satellite_nb)
 {
-    struct msg_payload_tracking_look_unlock_or_lock_failure msg_payload_tracking_look_unlock_or_lock_failure;
-    struct msg msg;
+    struct event_tracking_loop_unlock_or_lock_failure *event = (struct event_tracking_loop_unlock_or_lock_failure *) allocate_event(EVT_TRACKING_LOOP_UNLOCK_OR_LOCK_FAILURE);
 
     printf("loose lock or lock failure for satellite %d\n", satellite_nb + 1);
-    msg.msg_type = "tracking_look_unlock_or_lock_failure";
-    msg.msg_payload = &msg_payload_tracking_look_unlock_or_lock_failure;
-    msg_payload_tracking_look_unlock_or_lock_failure.satellite_nb = satellite_nb;
-    publish(&msg);
+    event->satellite_nb = satellite_nb;
+    publish(&event->evt);
 }
 
-static enum tracking_loop_state tl_acq_1000_hz_state_handler(struct tracking_loop *tracking_loop, struct msg_payload_new_one_ms_buffer *payload)
+static enum tracking_loop_state tl_acq_1000_hz_state_handler(struct tracking_loop *tracking_loop, struct event_one_ms_buffer *evt)
 {
     struct itf_acquisition_freq_range frange = {-10000, 10000, 1000};
     struct itf_acquisition_shift_range srange = {0, 2047};
     struct itf_acquisition_sat_status sat_status;
 
-    detect_one_satellite(payload->file_source_buffer, tracking_loop->satellite_nb, 0, &frange,
+    detect_one_satellite(evt->file_source_buffer, tracking_loop->satellite_nb, 0, &frange,
                          &srange, &sat_status);
     print_status(&sat_status);
     if (sat_status.is_present) {
@@ -84,7 +80,7 @@ static enum tracking_loop_state tl_acq_1000_hz_state_handler(struct tracking_loo
     return TL_ACQ_1000_HZ_STATE;
 }
 
-static enum tracking_loop_state tl_acq_100_hz_state_handler(struct tracking_loop *tracking_loop, struct msg_payload_new_one_ms_buffer *payload)
+static enum tracking_loop_state tl_acq_100_hz_state_handler(struct tracking_loop *tracking_loop, struct event_one_ms_buffer *evt)
 {
     int freq = tracking_loop->ctx.tl_acq_100_hz_state.doppler_freq;
     unsigned int ca_shift = tracking_loop->ctx.tl_acq_100_hz_state.ca_shift;
@@ -92,7 +88,7 @@ static enum tracking_loop_state tl_acq_100_hz_state_handler(struct tracking_loop
     struct itf_acquisition_shift_range srange = {ca_shift?ca_shift-1:ca_shift, ca_shift<2047?ca_shift + 1:ca_shift};
     struct itf_acquisition_sat_status sat_status;
 
-    detect_one_satellite(payload->file_source_buffer, tracking_loop->satellite_nb, tracking_loop->ctx.tl_acq_100_hz_state.treshold_use,
+    detect_one_satellite(evt->file_source_buffer, tracking_loop->satellite_nb, tracking_loop->ctx.tl_acq_100_hz_state.treshold_use,
                          &frange, &srange, &sat_status);
     print_status(&sat_status);
     if (sat_status.is_present) {
@@ -107,7 +103,7 @@ static enum tracking_loop_state tl_acq_100_hz_state_handler(struct tracking_loop
     return TL_ACQ_1000_HZ_STATE;
 }
 
-static enum tracking_loop_state tl_acq_10_hz_state_handler(struct tracking_loop *tracking_loop, struct msg_payload_new_one_ms_buffer *payload)
+static enum tracking_loop_state tl_acq_10_hz_state_handler(struct tracking_loop *tracking_loop, struct event_one_ms_buffer *evt)
 {
     int freq = tracking_loop->ctx.tl_acq_10_hz_state.doppler_freq;
     unsigned int ca_shift = tracking_loop->ctx.tl_acq_10_hz_state.ca_shift;
@@ -115,7 +111,7 @@ static enum tracking_loop_state tl_acq_10_hz_state_handler(struct tracking_loop 
     struct itf_acquisition_shift_range srange = {ca_shift?ca_shift-1:ca_shift, ca_shift<2047?ca_shift + 1:ca_shift};
     struct itf_acquisition_sat_status sat_status;
 
-    detect_one_satellite(payload->file_source_buffer, tracking_loop->satellite_nb, tracking_loop->ctx.tl_acq_10_hz_state.treshold_use,
+    detect_one_satellite(evt->file_source_buffer, tracking_loop->satellite_nb, tracking_loop->ctx.tl_acq_10_hz_state.treshold_use,
                          &frange, &srange, &sat_status);
     print_status(&sat_status);
     if (sat_status.is_present) {
@@ -128,42 +124,33 @@ static enum tracking_loop_state tl_acq_10_hz_state_handler(struct tracking_loop 
     return TL_ACQ_1000_HZ_STATE;
 }
 
-static void destroy(struct tracking_loop_itf *tracking_loop_itf)
+static void new_one_ms_buffer_notify(struct subscriber *subscriber, struct event *evt)
 {
-    struct tracking_loop *tracking_loop = container_of(tracking_loop_itf, struct tracking_loop, tracking_loop_itf);
-
-    unsubscribe(&tracking_loop->new_one_ms_buffer_subscriber, "new_one_ms_buffer");
-
-    free(tracking_loop);
-}
-
-static void new_one_ms_buffer_notify(struct subscriber *subscriber, struct msg *msg)
-{
-    struct msg_payload_new_one_ms_buffer *msg_payload_new_one_ms_buffer = (struct msg_payload_new_one_ms_buffer *) msg->msg_payload;
+    struct event_one_ms_buffer *event_one_ms_buffer = container_of(evt, struct event_one_ms_buffer, evt);
     struct tracking_loop *tracking_loop = container_of(subscriber, struct tracking_loop, new_one_ms_buffer_subscriber);
 
     switch(tracking_loop->state) {
         case TL_ACQ_1000_HZ_STATE:
             //printf("TL_ACQ_1000_HZ_STATE %d\n", tracking_loop->satellite_nb);
-            tracking_loop->state = tl_acq_1000_hz_state_handler(tracking_loop, msg->msg_payload);
+            tracking_loop->state = tl_acq_1000_hz_state_handler(tracking_loop, event_one_ms_buffer);
             break;
         case TL_ACQ_100_HZ_STATE:
             //printf("TL_ACQ_100_HZ_STATE %d\n", tracking_loop->satellite_nb);
-            tracking_loop->state = tl_acq_100_hz_state_handler(tracking_loop, msg->msg_payload);
+            tracking_loop->state = tl_acq_100_hz_state_handler(tracking_loop, event_one_ms_buffer);
             break;
         case TL_ACQ_10_HZ_STATE:
             //printf("TL_ACQ_10_HZ_STATE %d\n", tracking_loop->satellite_nb);
-            tracking_loop->state = tl_acq_10_hz_state_handler(tracking_loop, msg->msg_payload);
+            tracking_loop->state = tl_acq_10_hz_state_handler(tracking_loop, event_one_ms_buffer);
             break;
         case TL_PLL_LOCKING_STATE:
-            tracking_loop->state = tl_pll_locking_handler(&tracking_loop->ctx.tl_pll_state, msg->msg_payload);
+            tracking_loop->state = tl_pll_locking_handler(&tracking_loop->ctx.tl_pll_state, event_one_ms_buffer);
             break;
         case TL_PLL_LOCKED_STATE:
-            tracking_loop->state = tl_pll_locked_handler(&tracking_loop->ctx.tl_pll_state, msg->msg_payload);
+            tracking_loop->state = tl_pll_locked_handler(&tracking_loop->ctx.tl_pll_state, event_one_ms_buffer);
             break;
         case TL_FAIL_STATE:
             /* auto destroy */
-            destroy(&tracking_loop->tracking_loop_itf);
+            destroy_tracking_loop(tracking_loop);
             break;
         default:
             assert(0);
@@ -171,7 +158,7 @@ static void new_one_ms_buffer_notify(struct subscriber *subscriber, struct msg *
 }
 
 /* public api */
-struct tracking_loop_itf *create_tracking_loop(int satellite_nb)
+handle create_tracking_loop(int satellite_nb)
 {
     struct tracking_loop *tracking_loop = (struct tracking_loop *) malloc(sizeof(struct tracking_loop));
     int i;
@@ -180,9 +167,17 @@ struct tracking_loop_itf *create_tracking_loop(int satellite_nb)
     tracking_loop->state = TL_ACQ_1000_HZ_STATE;
     tracking_loop->ctx.tl_acq_1000_hz_state.counter = 0;
     tracking_loop->satellite_nb = satellite_nb;
-    tracking_loop->tracking_loop_itf.destroy = destroy;
     tracking_loop->new_one_ms_buffer_subscriber.notify = new_one_ms_buffer_notify;
-    subscribe(&tracking_loop->new_one_ms_buffer_subscriber, "new_one_ms_buffer");
+    subscribe(&tracking_loop->new_one_ms_buffer_subscriber, EVT_ONE_MS_BUFFER);
 
-    return &tracking_loop->tracking_loop_itf;
+    return tracking_loop;
+}
+
+void destroy_tracking_loop(handle hdl)
+{
+    struct tracking_loop *tracking_loop = (struct tracking_loop *) hdl;
+
+    unsubscribe(&tracking_loop->new_one_ms_buffer_subscriber, EVT_ONE_MS_BUFFER);
+
+    free(tracking_loop);
 }

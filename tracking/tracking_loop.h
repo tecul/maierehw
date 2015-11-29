@@ -1,7 +1,6 @@
 #ifndef __TRACKING_LOOP__
 #define __TRACKING_LOOP__
 
-#include "tracking.h"
 #include "gps.h"
 #include "core.h"
 
@@ -35,7 +34,7 @@ struct info {
 
 struct pll {
     int sat_nb;
-    struct msg_payload_new_one_ms_buffer buffer[2];
+    struct event_one_ms_buffer buffer[2];
     int buffer_write_index;
     int buffer_read_index;
     int sample_read_shift;
@@ -45,10 +44,11 @@ struct pll {
     struct info info;
 };
 void tl_init_pll_state(struct pll *pll, int sat_nb, int freq, unsigned int ca_shift);
-enum tracking_loop_state tl_pll_locking_handler(struct pll *pll, struct msg_payload_new_one_ms_buffer *payload);
-enum tracking_loop_state tl_pll_locked_handler(struct pll *pll, struct msg_payload_new_one_ms_buffer *payload);
+enum tracking_loop_state tl_pll_locking_handler(struct pll *pll, struct event_one_ms_buffer *evt);
+enum tracking_loop_state tl_pll_locked_handler(struct pll *pll, struct event_one_ms_buffer *evt);
 
 
-struct tracking_loop_itf *create_tracking_loop(int satellite_nb);
+handle create_tracking_loop(int satellite_nb);
+void destroy_tracking_loop(handle hdl);
 
 #endif
