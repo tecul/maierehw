@@ -128,6 +128,7 @@ struct itf_acquisition_sat_status {
 };
 
 struct event *allocate_event(event_type_t event_type);
+struct event *duplicate_event(struct event *evt);
 void deallocate_event(struct event *evt);
 void init_event_module();
 void subscribe(struct subscriber *subscriber, event_type_t event_type);

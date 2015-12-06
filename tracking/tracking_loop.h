@@ -51,4 +51,7 @@ enum tracking_loop_state tl_pll_locked_handler(struct pll *pll, struct event_one
 handle create_tracking_loop(int satellite_nb);
 void destroy_tracking_loop(handle hdl);
 
+handle create_tracking_loop_threaded(int satellite_nb);
+void destroy_tracking_loop_threaded(handle hdl);
+
 #endif

@@ -62,6 +62,15 @@ struct event *allocate_event(event_type_t event_type)
     return evt;
 }
 
+struct event *duplicate_event(struct event *evt)
+{
+    struct event *res = (struct event *) malloc(evt->size);
+
+    memcpy(res, evt, evt->size);
+
+    return res;
+}
+
 void deallocate_event(struct event *evt)
 {
     free(evt);

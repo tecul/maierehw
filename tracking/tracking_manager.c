@@ -22,7 +22,8 @@ static void new_satellite_detected_notify(struct subscriber *subscriber, struct 
     //printf("satellite %d detected / doppler = %d / ca_shift = %d\n", payload->satellite_nb + 1, payload->doppler_freq, payload->ca_shift);
     if (tracking_manager->current_channels_nb < tracking_manager->max_channels_nb && !tracking_manager->tracking_loop_handle[event->satellite_nb]) {
         printf(" Create tracking loop for satellite %d detected / doppler = %d / ca_shift = %d\n", event->satellite_nb + 1, event->doppler_freq, event->ca_shift);
-        tracking_manager->tracking_loop_handle[event->satellite_nb] = create_tracking_loop(event->satellite_nb);
+        //tracking_manager->tracking_loop_handle[event->satellite_nb] = create_tracking_loop(event->satellite_nb);
+        tracking_manager->tracking_loop_handle[event->satellite_nb] = create_tracking_loop_threaded(event->satellite_nb);
         assert(tracking_manager->tracking_loop_handle[event->satellite_nb]);
         tracking_manager->current_channels_nb++;
     }
@@ -34,6 +35,8 @@ static void tracking_look_unlock_or_lock_failure_notify(struct subscriber *subsc
     struct tracking_manager *tracking_manager = container_of(subscriber, struct tracking_manager, tracking_look_unlock_or_lock_failure_subscriber);
 
     /* let tracking loop to self destruct */
+    //destroy_tracking_loop(tracking_manager->tracking_loop_handle[event->satellite_nb]);
+    destroy_tracking_loop_threaded(tracking_manager->tracking_loop_handle[event->satellite_nb]);
     tracking_manager->tracking_loop_handle[event->satellite_nb] = NULL;
     tracking_manager->current_channels_nb--;
 }
@@ -64,8 +67,10 @@ void destroy_tracking_manager(handle hdl)
     int i;
 
     for (i = 0; i < SAT_NB; ++i)
-        if (tracking_manager->tracking_loop_handle[i])
-            destroy_tracking_loop(tracking_manager->tracking_loop_handle[i]);
+        if (tracking_manager->tracking_loop_handle[i]) {
+            //destroy_tracking_loop(tracking_manager->tracking_loop_handle[i]);
+            destroy_tracking_loop_threaded(tracking_manager->tracking_loop_handle[i]);
+        }
     unsubscribe(&tracking_manager->new_satellite_detected_subscriber, EVT_SATELLITE_DETECTED);
     unsubscribe(&tracking_manager->tracking_look_unlock_or_lock_failure_subscriber, EVT_TRACKING_LOOP_UNLOCK_OR_LOCK_FAILURE);
 
